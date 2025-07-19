@@ -271,10 +271,24 @@ def install_exception_handler(dump_filename: str = "core_dump.pkl"):
     """Install a global exception handler that creates core dumps."""
 
     def exception_handler(exc_type, exc_value, exc_traceback):
-        # Don't create core dump for KeyboardInterrupt
+        # Don't create core dump for KeyboardInterrupt or signal-related exceptions
         if exc_type == KeyboardInterrupt:
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
+
+        # Check for signal-related exceptions
+        # SystemExit can be raised by signal handlers or sys.exit()
+        if exc_type == SystemExit:
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+
+        # Check if this is a signal-related exception by examining the exception value
+        if exc_value is not None:
+            # Some signal handlers might raise custom exceptions with signal info
+            exc_str = str(exc_value).lower()
+            if any(signal_name in exc_str for signal_name in ["sigterm", "sigint", "sigkill", "signal"]):
+                sys.__excepthook__(exc_type, exc_value, exc_traceback)
+                return
 
         print("\nUnhandled exception occurred. Creating core dump...")
         core_dump = CoreDumpGenerator.create_from_exception(exc_type, exc_value, exc_traceback)
@@ -291,10 +305,21 @@ def _core_dump_wrapper(target, process_name, *args, **kwargs):
     try:
         # Run the target function
         return target(*args, **kwargs)
+    except (KeyboardInterrupt, SystemExit):
+        # Don't create core dumps for signal-related exceptions
+        raise
     except Exception:
-        # Create core dump on any unhandled exception
-        print(f"\nUnhandled exception in {process_name}. Creating core dump...")
+        # Check if this is a signal-related exception
         exc_type, exc_value, exc_traceback = sys.exc_info()
+
+        if exc_value is not None:
+            # Check if this is a signal-related exception by examining the exception value
+            exc_str = str(exc_value).lower()
+            if any(signal_name in exc_str for signal_name in ["sigterm", "sigint", "sigkill", "signal"]):
+                raise  # Re-raise signal-related exceptions without creating core dumps
+
+        # Create core dump on any other unhandled exception
+        print(f"\nUnhandled exception in {process_name}. Creating core dump...")
 
         if exc_type and exc_value and exc_traceback:
             dump_filename = f"{process_name}_crash.pkl"

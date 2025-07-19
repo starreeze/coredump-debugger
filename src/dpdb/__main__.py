@@ -35,6 +35,11 @@ def run_program_with_handler(program_path: str, args: list):
     except KeyboardInterrupt:
         print("\nProgram interrupted by user")
         return 130
+    except SystemExit as e:
+        # Handle sys.exit() calls from the program
+        if hasattr(e, "code") and e.code is not None:
+            return e.code
+        return 0
     except ImportError as e:
         print(f"Error loading program: {e}")
         return 1
@@ -64,22 +69,26 @@ def main():
 
     # Check if the first argument is a Python file
     program_path = sys.argv[1]
-    if program_path.endswith(".py") and os.path.isfile(program_path):
-        # Mode 2: Run program with global handler
-        program_args = sys.argv[2:]
-        exit_code = run_program_with_handler(program_path, program_args)
-        sys.exit(exit_code)
-    else:
+
+    if program_path.endswith(".pkl"):
         # Mode 1: Debug existing core dump (original functionality)
         if len(sys.argv) == 2:
             if not os.path.isfile(program_path):
-                print(f"Error: File '{program_path}' not found")
+                print(f"Error: File '{program_path}' not found or not a file")
                 sys.exit(1)
             dump = load_core_dump(sys.argv[1])
             debug_core_dump(dump)
         else:
             print("Usage: dpdb <dump_file>")
             sys.exit(1)
+    else:
+        # Mode 2: Run program with global handler
+        if not os.path.isfile(program_path):
+            print(f"Error: File '{program_path}' not found or not a file")
+            sys.exit(1)
+        program_args = sys.argv[2:]
+        exit_code = run_program_with_handler(program_path, program_args)
+        sys.exit(exit_code)
 
 
 if __name__ == "__main__":
