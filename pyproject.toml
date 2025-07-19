@@ -1,6 +1,6 @@
 [project]
 name = "coredump-debugger"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="starreeze", email="starreeze@foxmail.com" },
 ]
@@ -22,6 +22,9 @@ dependencies = [
 dev = [
     "term_background",
 ]
+
+[project.scripts]
+dpdb = "dpdb.__main__:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

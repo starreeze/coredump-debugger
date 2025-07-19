@@ -7,6 +7,7 @@ A comprehensive Python "core dump" system that captures execution state (variabl
 - **Automatic Core Dumps**: Automatically create core dumps when unhandled exceptions occur
 - **Manual Core Dumps**: Create core dumps at any point in your code
 - **Post-Mortem Debugger**: Interactive debugger to analyze core dumps with rich terminal UI
+- **Command-Line Interface**: Run programs with automatic crash handling or debug existing core dumps
 - **Adaptive Theme Detection**: Automatically detects light/dark terminal themes for optimal color schemes
 - **Complete State Capture**: Captures local variables, global variables, stack frames, and code context
 - **Persistent Storage**: Core dumps are saved as pickle files for later analysis
@@ -33,9 +34,38 @@ pip install coredump-debugger[dev]
 
 The debugger will work without `term_background` but will have more accurate theme detection when it's available.
 
+After installation, the `dpdb` command will be available in your system PATH. The package automatically creates a console script entry point that installs the `dpdb` executable.
 
-### 1. Basic Usage
+### 1. Command-Line Usage
 
+Dpdb provides a command-line interface similar to `pdb` for running programs with automatic crash handling:
+
+```bash
+# Run a Python program with automatic core dump generation
+dpdb my_program.py arg1 arg2
+
+# Debug an existing core dump file
+dpdb crash_dump.pkl
+
+# Get help
+dpdb --help
+```
+
+**Mode 1: Program Execution with Crash Handling**
+```bash
+dpdb my_program.py arg1 arg2
+```
+This automatically installs the global core dump handler and runs your program. If the program crashes, a core dump file will be created automatically.
+
+**Mode 2: Core Dump Debugging**
+```bash
+dpdb crash_dump.pkl
+```
+This loads an existing core dump file and starts the interactive debugger.
+
+### 2. Programmatic API
+
+#### Global Exception Handler
 Just add `dpdb.install_exception_handler("path/to/core_dump.pkl")` to your code, and a core dump will be created and saved automatically when an exception occurs.
 
 ```python
@@ -54,7 +84,7 @@ def my_function():
 my_function()
 ```
 
-### 2. Manual Core Dumps
+#### Manual Core Dump
 
 ```python
 import dpdb
@@ -76,8 +106,71 @@ Attach Dpdb to a core dump file:
 
 ```bash
 # Debug a core dump file
+dpdb my_app_crash.pkl
+
+# Or using the module
 python -m dpdb my_app_crash.pkl
 ```
+
+## Command-Line Interface
+
+The `dpdb` command provides a powerful interface for both running programs with crash protection and debugging existing core dumps.
+
+### Usage Patterns
+
+```bash
+# Run a program with automatic crash handling
+dpdb my_script.py arg1 arg2
+
+# Debug an existing core dump
+dpdb crash_dump.pkl
+
+# Get help
+dpdb --help
+dpdb -h
+```
+
+### Examples
+
+**Running a Program with Crash Protection:**
+```bash
+# Run a script that might crash
+dpdb my_data_processor.py input.csv output.json
+
+# Run with multiple arguments
+dpdb my_web_server.py --port 8080 --debug
+
+# The program runs normally, but if it crashes, a core dump is created
+```
+
+**Debugging a Core Dump:**
+```bash
+# After a crash, debug the generated core dump
+dpdb main_process_12345_crash.pkl
+
+# This starts the interactive debugger with full source code access
+```
+
+### How It Works
+
+1. **Program Execution Mode**: When you run `dpdb my_program.py`, the system:
+   - Installs the global core dump handler
+   - Loads and executes your program in the same process
+   - Preserves all source code information for debugging
+   - Creates a core dump file if the program crashes
+
+2. **Core Dump Debugging Mode**: When you run `dpdb crash_dump.pkl`, the system:
+   - Loads the core dump file
+   - Starts the interactive debugger
+   - Provides full access to the crash state and source code
+
+### Advantages Over Subprocess Approaches
+
+- **Source Code Preservation**: Full source code context is available in the debugger
+- **Same Process Execution**: The global handler works correctly because everything runs in the same process
+- **Clean Implementation**: No temporary files or complex subprocess management
+- **Argument Handling**: Programs receive the correct `sys.argv` arguments
+- **Elegant Design**: Direct module loading and execution
 
 ## Post-Mortem Debugger Commands
 
@@ -146,6 +239,12 @@ unset DPDB_THEME
 - **Light theme**: Uses darker colors (blue, dark_orange, dark_green, purple) on light backgrounds
 
 ## API Reference
+
+### Command-Line Interface
+
+- `dpdb <program.py> [args...]` - Run program with automatic crash handling
+- `dpdb <dump_file>` - Debug an existing core dump
+- `dpdb --help` - Show usage information
 
 ### CoreDumpGenerator
 
