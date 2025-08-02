@@ -1,15 +1,15 @@
 [project]
 name = "coredump-debugger"
-version = "0.0.3"
+version = "0.0.4"
 authors = [
   { name="starreeze", email="starreeze@foxmail.com" },
 ]
 description = "Python core dump system for post-mortem debugging"
 readme = "readme.md"
+license = "GPL-3.0-or-later"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
